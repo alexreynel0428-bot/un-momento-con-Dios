@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 60" width="120" height="60" aria-hidden="true" focusable="false">
+  <!-- Pequena ramita horizontal para separadores y versiculos -->
+  <g stroke="#9FBEA5" stroke-width="2" stroke-linecap="round" fill="none">
+    <path d="M10 30 H 110"/>
+  </g>
+  <g>
+    <path d="M40 30 C 34 18, 50 12, 56 24 C 52 34, 44 34, 40 30 Z" fill="#4D8B57"/>
+    <path d="M64 30 C 70 18, 86 24, 80 36 C 72 38, 66 34, 64 30 Z" fill="#24563D"/>
+  </g>
+  <circle cx="60" cy="30" r="4" fill="#D8BD71"/>
+</svg>
