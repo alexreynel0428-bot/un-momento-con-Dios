@@ -1,0 +1,1033 @@
+/* =======================================================================
+   UN MOMENTO CON DIOS — Hoja de estilos
+   Estructura:
+   1. Variables y paleta        4. Decoracion botanica
+   2. Reset y base              5. Portada
+   3. Libro y animaciones       6. Paginas, acordeones, diario
+   7. Indice  8. Responsive  9. Reducir movimiento  10. Impresion
+   Para cambiar los colores edita las variables de :root.
+   ======================================================================= */
+
+:root {
+  /* ---- Paleta (seccion 3 del encargo) ---- */
+  --agua:        #72CFC3; /* verde agua marina: color principal */
+  --menta:       #CDEBDD; /* verde menta claro */
+  --salvia:      #9FBEA5; /* verde salvia */
+  --hoja:        #4D8B57; /* verde hoja */
+  --bosque:      #24563D; /* verde bosque */
+  --petroleo:    #173E40; /* verde petroleo: profundidad */
+  --blanco:      #FFFEF7; /* blanco calido: fondo de lectura */
+  --beige:       #F1E7D5; /* beige suave */
+  --dorado:      #D8BD71; /* dorado tenue: detalles de esperanza */
+  --texto-sec:   #52645A; /* gris verdoso para texto secundario */
+  --texto:       #1f3029; /* texto principal sobre claro */
+
+  --sombra-libro: 0 30px 60px -20px rgba(23,62,64,.55), 0 8px 20px rgba(23,62,64,.25);
+  --radio:       18px;
+  --flip-dur:    680ms;
+  --fuente-titulo: 'Playfair Display', 'Georgia', 'Times New Roman', serif;
+  --fuente-texto:  'Lora', 'Georgia', serif;
+  --fuente-ui:     'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* ---- 2. Reset y base ---- */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--fuente-texto);
+  color: var(--texto);
+  line-height: 1.65;
+  background:
+    radial-gradient(1200px 800px at 50% -10%, rgba(114,207,195,.35), transparent 60%),
+    linear-gradient(160deg, var(--petroleo), var(--bosque) 55%, #0f2b2c);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+img, svg { max-width: 100%; display: block; }
+button { font-family: var(--fuente-ui); cursor: pointer; }
+
+/* Foco visible accesible en todos los controles */
+:focus-visible {
+  outline: 3px solid var(--dorado);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.skip-link {
+  position: absolute; left: 12px; top: -60px;
+  background: var(--dorado); color: var(--petroleo);
+  padding: 10px 16px; border-radius: 10px; z-index: 200;
+  font-family: var(--fuente-ui); font-weight: 600;
+  transition: top .2s ease;
+}
+.skip-link:focus { top: 12px; }
+
+/* ====================================================================
+   3. ESTRUCTURA DEL LIBRO Y ANIMACION DE PASAR PAGINAS
+   ==================================================================== */
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(10px, 3vw, 36px);
+  gap: 14px;
+}
+
+.book-wrap {
+  position: relative;
+  width: min(760px, 94vw);
+  /* alto del libro: proporcion editorial tipo portada */
+  height: min(86dvh, 980px);
+  perspective: 2200px;
+}
+
+.viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+/* cada pagina ocupa todo el libro; solo la activa se muestra */
+.page {
+  position: absolute;
+  inset: 0;
+  display: none;
+}
+.page.is-active,
+.page.is-flipping,
+.page.is-under { display: block; }
+.page.is-active  { z-index: 3; }
+.page.is-flipping{ z-index: 5; }
+.page.is-under   { z-index: 2; }
+
+.page__sheet {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform-origin: left center;
+  transition: transform var(--flip-dur) cubic-bezier(.46,.03,.3,1);
+  will-change: transform;
+  border-radius: var(--radio);
+}
+
+/* caras de la hoja: frente con contenido, reverso papel coherente */
+.page__face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: var(--radio);
+  overflow: hidden;
+  background:
+    url('assets/paper-texture.svg') repeat,
+    var(--blanco);
+  box-shadow: var(--sombra-libro);
+}
+.page__back {
+  transform: rotateY(180deg);
+  background:
+    url('assets/paper-texture.svg') repeat,
+    linear-gradient(135deg, var(--beige), var(--blanco));
+}
+/* ligera sombra de lomo en el borde izquierdo */
+.page__front::after {
+  content: "";
+  position: absolute; inset: 0 auto 0 0; width: 42px;
+  background: linear-gradient(90deg, rgba(23,62,64,.16), transparent);
+  pointer-events: none;
+}
+
+/* estados de animacion controlados por JS */
+.page.flip-next .page__sheet  { transform: rotateY(-180deg); }
+.page.prep-prev .page__sheet  { transform: rotateY(-180deg); transition: none; }
+.page.flip-prev .page__sheet  { transform: rotateY(0deg); }
+
+/* contenido desplazable dentro de cada cara frontal */
+.page__content {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: clamp(22px, 4.4vw, 54px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--salvia) transparent;
+}
+.page__content::-webkit-scrollbar { width: 9px; }
+.page__content::-webkit-scrollbar-thumb {
+  background: var(--salvia); border-radius: 20px;
+}
+
+/* ---- Barra de controles de navegacion ---- */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: min(760px, 94vw);
+  background: rgba(255,254,247,.14);
+  border: 1px solid rgba(255,254,247,.22);
+  backdrop-filter: blur(6px);
+  padding: 10px 14px;
+  border-radius: 999px;
+}
+.controls[hidden] { display: none; }
+.ctrl-btn {
+  border: 1px solid rgba(255,254,247,.35);
+  background: rgba(255,254,247,.10);
+  color: var(--blanco);
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-size: .92rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: background .2s ease, transform .15s ease, opacity .2s ease;
+}
+.ctrl-btn:hover:not(:disabled) { background: var(--agua); color: var(--petroleo); transform: translateY(-1px); }
+.ctrl-btn:disabled { opacity: .4; cursor: not-allowed; }
+.ctrl-btn--primary { background: var(--dorado); color: var(--petroleo); border-color: var(--dorado); }
+.page-indicator {
+  color: var(--blanco);
+  font-family: var(--fuente-ui);
+  font-size: .9rem;
+  padding: 0 8px;
+  min-width: 118px;
+  text-align: center;
+  letter-spacing: .02em;
+}
+
+/* ====================================================================
+   4. DECORACION BOTANICA REUTILIZABLE
+   ==================================================================== */
+.decor {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  opacity: .95;
+}
+.decor--tl { top: -6px; left: -6px; width: clamp(90px,22%,150px); }
+.decor--br { bottom: -6px; right: -6px; width: clamp(90px,22%,150px); transform: rotate(180deg); }
+.decor--tr { top: -6px; right: -6px; width: clamp(80px,18%,130px); transform: scaleX(-1); }
+.decor--bl { bottom: -6px; left: -6px; width: clamp(80px,18%,130px); transform: scaleX(-1) rotate(180deg); }
+
+/* marco interior doble y fino */
+.inner-frame {
+  position: absolute;
+  inset: clamp(12px, 3vw, 24px);
+  border: 1.5px solid var(--salvia);
+  border-radius: calc(var(--radio) - 4px);
+  pointer-events: none;
+  z-index: 1;
+}
+.inner-frame::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid var(--dorado);
+  opacity: .55;
+  border-radius: inherit;
+}
+
+/* separador con ramita */
+.sprig {
+  width: 120px; height: 34px; margin: 4px auto;
+  opacity: .9;
+}
+
+/* ====================================================================
+   6. TIPOGRAFIA Y COMPONENTES DE CONTENIDO
+   ==================================================================== */
+.page__content > * { position: relative; z-index: 2; }
+.kicker {
+  font-family: var(--fuente-ui);
+  text-transform: uppercase;
+  letter-spacing: .18em;
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--hoja);
+}
+.page-title {
+  font-family: var(--fuente-titulo);
+  font-weight: 700;
+  font-size: clamp(1.5rem, 4.6vw, 2.3rem);
+  line-height: 1.15;
+  color: var(--bosque);
+  margin: 0;
+}
+.page-sub {
+  font-family: var(--fuente-titulo);
+  font-style: italic;
+  color: var(--texto-sec);
+  font-size: clamp(1rem, 2.6vw, 1.2rem);
+  margin: 0;
+}
+.body-text { margin: 0; font-size: clamp(1rem, 2.3vw, 1.08rem); }
+.body-text + .body-text { margin-top: .2em; }
+.text-muted { color: var(--texto-sec); }
+
+/* recuadro de versiculo: el mas decorado */
+.verse-card {
+  position: relative;
+  background: linear-gradient(145deg, var(--menta), var(--blanco));
+  border: 1px solid var(--salvia);
+  border-radius: 16px;
+  padding: clamp(18px, 3.2vw, 26px);
+  box-shadow: inset 0 0 0 4px rgba(255,254,247,.6), 0 6px 18px rgba(36,86,61,.12);
+  overflow: hidden;
+}
+.verse-card .leaf-corner {
+  position: absolute; width: 74px; pointer-events: none; opacity: .85;
+}
+.verse-card .leaf-corner.tl { top: -10px; left: -10px; }
+.verse-card .leaf-corner.br { bottom: -10px; right: -10px; transform: rotate(180deg); }
+.verse-ref {
+  font-family: var(--fuente-ui);
+  font-weight: 600;
+  color: var(--hoja);
+  letter-spacing: .04em;
+  font-size: 1.05rem;
+}
+.verse-text {
+  font-family: var(--fuente-titulo);
+  font-style: italic;
+  font-size: clamp(1.15rem, 3vw, 1.4rem);
+  color: var(--bosque);
+  margin: .4em 0 .3em;
+  line-height: 1.4;
+}
+.verse-tag {
+  display: inline-block;
+  font-family: var(--fuente-ui);
+  font-size: .68rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  background: var(--beige);
+  color: var(--texto-sec);
+  border: 1px solid var(--dorado);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.verse-list {
+  margin: .4em 0 0; padding: 0; list-style: none;
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.verse-list li {
+  font-family: var(--fuente-ui); font-size: .82rem;
+  background: var(--blanco); border: 1px solid var(--salvia);
+  padding: 5px 11px; border-radius: 999px; color: var(--bosque);
+}
+
+/* frase destacada */
+.pull-quote {
+  position: relative;
+  font-family: var(--fuente-titulo);
+  font-style: italic;
+  font-size: clamp(1.1rem, 2.8vw, 1.35rem);
+  color: var(--petroleo);
+  text-align: center;
+  padding: 18px 22px;
+  margin: 6px 0;
+  background: rgba(205,235,221,.5);
+  border-top: 2px solid var(--dorado);
+  border-bottom: 2px solid var(--dorado);
+  border-radius: 6px;
+}
+.pull-quote::before { content: "“"; color: var(--salvia); font-size: 2.2em; line-height: 0; vertical-align: -.35em; }
+
+/* aviso suave (notas de seguridad / biblia) */
+.soft-note {
+  background: var(--beige);
+  border-left: 4px solid var(--salvia);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: .92rem;
+  color: var(--texto-sec);
+}
+.soft-note strong { color: var(--bosque); }
+
+/* lista de preguntas de reflexion */
+.question-list { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 10px; }
+.question-list li {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: var(--blanco); border: 1px solid var(--menta);
+  padding: 12px 14px; border-radius: 12px;
+  font-size: clamp(.98rem, 2.2vw, 1.05rem);
+}
+.question-list li::before {
+  content: "✦"; color: var(--dorado); font-size: 1rem; flex: none; line-height: 1.5;
+}
+
+/* ---- Acordeones / ventanas desplegables (details nativo) ---- */
+.accordions { display: grid; gap: 12px; }
+.panel {
+  border: 1px solid var(--salvia);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(205,235,221,.45), var(--blanco));
+  overflow: hidden;
+}
+.panel > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px 18px;
+  font-family: var(--fuente-ui);
+  font-weight: 600;
+  color: var(--bosque);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+.panel > summary::-webkit-details-marker { display: none; }
+.panel > summary::before {
+  content: "❧"; color: var(--hoja); font-size: 1rem;
+}
+.panel > summary::after {
+  content: "+";
+  margin-left: auto;
+  font-size: 1.4rem;
+  color: var(--hoja);
+  transition: transform .3s ease;
+}
+.panel[open] > summary::after { content: "−"; }
+.panel[open] > summary { background: rgba(159,190,165,.25); }
+.panel__body {
+  padding: 4px 18px 18px;
+  font-size: .98rem;
+  color: var(--texto);
+  animation: panelIn .35s ease;
+}
+.panel__body p { margin: .4em 0; }
+.panel__body ul { margin: .4em 0; padding-left: 1.2em; }
+.panel__body ul li { margin: .25em 0; }
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.prayer-box {
+  background: var(--petroleo);
+  color: var(--blanco);
+  border-radius: 12px;
+  padding: 16px 18px;
+  font-family: var(--fuente-titulo);
+  font-style: italic;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  position: relative;
+}
+.prayer-box .amen { display:block; margin-top:.4em; color: var(--dorado); font-style: normal; font-family: var(--fuente-ui); letter-spacing:.1em; font-size:.8rem; }
+
+/* pausa guiada (respiracion) */
+.breath {
+  display: grid; place-items: center; gap: 10px; padding: 10px 0;
+}
+.breath__circle {
+  width: 96px; height: 96px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, var(--agua), var(--hoja));
+  box-shadow: 0 0 0 10px rgba(114,207,195,.25);
+  animation: breathe 8s ease-in-out infinite;
+}
+.breath__label { font-family: var(--fuente-ui); color: var(--texto-sec); font-size: .85rem; }
+@keyframes breathe {
+  0%,100% { transform: scale(.78); }
+  50%     { transform: scale(1.1); }
+}
+
+/* ---- Diario / campos de escritura ---- */
+.field { display: grid; gap: 6px; margin-bottom: 4px; }
+.field label {
+  font-family: var(--fuente-ui);
+  font-weight: 600;
+  color: var(--bosque);
+  font-size: .95rem;
+}
+.field textarea,
+.field input[type="text"] {
+  font-family: var(--fuente-texto);
+  font-size: 1rem;
+  color: var(--texto);
+  background: rgba(255,254,247,.9);
+  border: 1px solid var(--salvia);
+  border-radius: 10px;
+  padding: 10px 12px;
+  width: 100%;
+  resize: vertical;
+  line-height: 1.55;
+}
+.field textarea { min-height: 64px; }
+.field textarea:focus, .field input:focus { border-color: var(--hoja); background: var(--blanco); }
+
+.tool-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.tool-btn {
+  font-family: var(--fuente-ui);
+  border: 1px solid var(--hoja);
+  background: var(--blanco);
+  color: var(--bosque);
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-size: .9rem;
+  font-weight: 500;
+  transition: background .2s, color .2s;
+}
+.tool-btn:hover { background: var(--hoja); color: var(--blanco); }
+.tool-btn--danger { border-color: #b4553f; color: #b4553f; }
+.tool-btn--danger:hover { background: #b4553f; color: var(--blanco); }
+.save-hint { font-size: .82rem; color: var(--texto-sec); font-family: var(--fuente-ui); }
+.save-hint[data-state="saved"] { color: var(--hoja); }
+
+/* lineas de escritura estilo cuaderno (oracion personal) */
+.write-lines { display: grid; gap: 14px; }
+.write-lines .field textarea {
+  background: repeating-linear-gradient(
+    transparent, transparent 31px, rgba(159,190,165,.5) 32px);
+  min-height: 96px;
+}
+
+/* ====================================================================
+   7. INDICE INTERACTIVO (panel lateral)
+   ==================================================================== */
+.index-panel {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: min(380px, 88vw);
+  background: linear-gradient(160deg, var(--bosque), var(--petroleo));
+  color: var(--blanco);
+  box-shadow: -20px 0 60px rgba(0,0,0,.45);
+  transform: translateX(100%);
+  transition: transform .4s cubic-bezier(.4,0,.2,1);
+  z-index: 120;
+  display: flex; flex-direction: column;
+  padding: 22px;
+  overflow-y: auto;
+}
+.index-panel.open { transform: translateX(0); }
+.index-panel__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.index-panel h2 { font-family: var(--fuente-titulo); margin: 0; font-size: 1.4rem; color: var(--agua); }
+.index-close {
+  background: transparent; border: 1px solid rgba(255,254,247,.4);
+  color: var(--blanco); width: 38px; height: 38px; border-radius: 50%; font-size: 1.1rem;
+}
+.index-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 10px; }
+.index-item {
+  display: flex; gap: 12px; align-items: center; text-align: left;
+  width: 100%;
+  background: rgba(255,254,247,.08);
+  border: 1px solid rgba(255,254,247,.18);
+  color: var(--blanco);
+  border-radius: 12px; padding: 12px 14px;
+  transition: background .2s, transform .15s;
+}
+.index-item:hover { background: rgba(114,207,195,.22); transform: translateX(-3px); }
+.index-item .num {
+  flex: none; width: 34px; height: 34px; border-radius: 50%;
+  background: var(--dorado); color: var(--petroleo);
+  display: grid; place-items: center; font-family: var(--fuente-ui); font-weight: 700;
+}
+.index-item .meta b { font-family: var(--fuente-ui); display:block; font-size: .98rem; }
+.index-item .meta span { font-size: .8rem; color: var(--menta); }
+.scrim {
+  position: fixed; inset: 0; background: rgba(15,30,30,.5);
+  opacity: 0; visibility: hidden; transition: opacity .3s; z-index: 110;
+}
+.scrim.open { opacity: 1; visibility: visible; }
+
+/* ====================================================================
+   5. PORTADA Y CONTRAPORTADA
+   ==================================================================== */
+.cover .page__face {
+  background:
+    radial-gradient(900px 500px at 50% 0%, rgba(114,207,195,.22), transparent 60%),
+    linear-gradient(165deg, var(--petroleo), var(--bosque) 70%, #0f2b2c);
+}
+.cover__frame {
+  position: absolute; inset: clamp(16px,3.4vw,30px);
+  border: 1.5px solid var(--dorado);
+  border-radius: 12px;
+  z-index: 2;
+  pointer-events: none;
+}
+.cover__inner {
+  position: absolute;
+  inset: clamp(46px, 10%, 90px) clamp(30px,8%,64px);
+  z-index: 3;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; gap: 14px;
+}
+.cover__plate {
+  background: linear-gradient(160deg, var(--blanco), var(--beige));
+  border-radius: 16px;
+  padding: clamp(24px,5vw,40px) clamp(20px,5vw,34px);
+  box-shadow: 0 18px 40px rgba(0,0,0,.35), inset 0 0 0 1px var(--dorado);
+  display: grid; gap: 10px;
+}
+.cover__title {
+  font-family: var(--fuente-ui);
+  letter-spacing: .28em;
+  text-transform: uppercase;
+  font-size: clamp(.95rem, 3vw, 1.25rem);
+  color: var(--hoja);
+  font-weight: 600;
+}
+.cover__main {
+  font-family: var(--fuente-titulo);
+  font-style: italic;
+  font-weight: 700;
+  font-size: clamp(1.8rem, 6.4vw, 3rem);
+  line-height: 1.1;
+  color: var(--bosque);
+  margin: 0;
+}
+.cover__sub {
+  font-family: var(--fuente-texto);
+  color: var(--texto-sec);
+  font-size: clamp(.9rem, 2.4vw, 1.05rem);
+  margin: 0;
+}
+.cover__verse-illu { width: clamp(90px,26%,140px); margin: 4px auto 0; }
+.cover__epigraph {
+  color: var(--menta);
+  font-family: var(--fuente-titulo);
+  font-style: italic;
+  font-size: clamp(.95rem, 2.6vw, 1.15rem);
+  max-width: 30ch;
+}
+.cover__open {
+  margin-top: 6px;
+  background: var(--dorado);
+  color: var(--petroleo);
+  border: none;
+  padding: 14px 30px;
+  border-radius: 999px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-family: var(--fuente-ui);
+  box-shadow: 0 10px 26px rgba(216,189,113,.45);
+  transition: transform .2s, box-shadow .2s;
+  display: inline-flex; align-items: center; gap: 10px;
+}
+.cover__open:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 14px 32px rgba(216,189,113,.6); }
+.cover__open .ar { transition: transform .25s; }
+.cover__open:hover .ar { transform: translateX(4px); }
+.cover__leaf {
+  position: absolute; width: clamp(120px,32%,220px); z-index: 1; opacity: .95;
+}
+.cover__leaf.t { top: -12px; left: -12px; }
+.cover__leaf.b { bottom: -12px; right: -12px; transform: rotate(180deg); }
+
+/* apertura del libro al pulsar "Abrir mi libro" */
+.cover.opening .page__sheet {
+  animation: coverOpen var(--flip-dur) ease forwards;
+  transform-origin: left center;
+}
+@keyframes coverOpen {
+  to { transform: rotateY(-165deg); }
+}
+
+/* ilustracion tematica de capitulo (circulo con hoja) */
+.chapter-illu {
+  width: clamp(120px, 40%, 190px);
+  aspect-ratio: 1;
+  margin: 4px auto;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 38% 34%, var(--menta), var(--salvia));
+  box-shadow: inset 0 0 0 6px rgba(255,254,247,.7), 0 10px 24px rgba(36,86,61,.2);
+}
+.chapter-illu svg { width: 58%; }
+.chapter-num {
+  font-family: var(--fuente-ui); font-weight: 700; letter-spacing:.2em;
+  color: var(--dorado); text-transform: uppercase; font-size:.8rem; text-align:center;
+}
+
+/* animacion delicada de hoja (pagina final) */
+.leaf-float { width: 70px; margin: 10px auto; transform-origin: bottom center; animation: sway 6s ease-in-out infinite; }
+@keyframes sway { 0%,100%{ transform: rotate(-6deg); } 50%{ transform: rotate(6deg); } }
+
+/* ====================================================================
+   8. RESPONSIVE
+   ==================================================================== */
+@media (max-width: 560px) {
+  .book-wrap { height: min(82dvh, 760px); width: 96vw; }
+  .controls { gap: 6px; padding: 8px 10px; }
+  .ctrl-btn { padding: 10px 13px; font-size: .9rem; } /* objetivos tactiles grandes */
+  .ctrl-btn .lbl-long { display: none; }
+  .page__content { padding: 20px 18px 26px; }
+  .inner-frame { inset: 10px; }
+  .decor { opacity: .8; }
+  .decor--tr, .decor--bl { display: none; } /* evitar superposicion con texto */
+}
+@media (min-width: 1100px) {
+  .book-wrap { width: 820px; height: min(88dvh, 1040px); }
+}
+
+/* ====================================================================
+   9. PREFERENCIA DE MENOS MOVIMIENTO
+   ==================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .page__sheet { transition: opacity .2s ease !important; }
+  .page.flip-next .page__sheet,
+  .page.flip-prev .page__sheet,
+  .page.prep-prev .page__sheet { transform: none !important; }
+  .breath__circle, .leaf-float, .cover.opening .page__sheet { animation: none !important; }
+  .panel__body { animation: none; }
+  * { scroll-behavior: auto !important; }
+}
+/* clase JS equivalente para el boton de reducir movimiento */
+.reduce-motion .page__sheet { transition: opacity .2s ease !important; }
+.reduce-motion .page.flip-next .page__sheet,
+.reduce-motion .page.flip-prev .page__sheet,
+.reduce-motion .page.prep-prev .page__sheet { transform: none !important; }
+.reduce-motion .breath__circle,
+.reduce-motion .leaf-float { animation: none !important; }
+
+/* ====================================================================
+   10. IMPRESION / EXPORTAR A PDF  (version para imprimir y engrapar)
+   ==================================================================== */
+@media print {
+  @page { size: A4 portrait; margin: 18mm 14mm 18mm 20mm; } /* margen interior mayor para encuadernar */
+  body {
+    background: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .controls, .index-panel, .scrim, .skip-link,
+  .cover__open, .tool-row, .no-print { display: none !important; }
+
+  .app { display: block; padding: 0; }
+  .book-wrap { width: 100%; height: auto; perspective: none; }
+  .viewport { transform-style: flat; }
+
+  /* todas las paginas en flujo normal, una por hoja */
+  .page {
+    display: block !important;
+    position: static !important;
+    page-break-after: always;
+    break-after: page;
+    margin: 0 0 6mm;
+  }
+  .page__sheet { transform: none !important; transform-style: flat; }
+  .page__back { display: none !important; }
+  .page__face {
+    position: static !important;
+    box-shadow: none !important;
+    border: 1px solid var(--salvia);
+    min-height: 250mm;
+  }
+  .page__content {
+    position: static !important;
+    overflow: visible !important;
+    padding: 14mm 12mm;
+  }
+  .page__front::after { display: none; }
+
+  /* mantener juntos titulos, versiculos y reflexiones */
+  .page-title, .verse-card, .pull-quote, .prayer-box,
+  .question-list li, .panel { break-inside: avoid; page-break-inside: avoid; }
+  /* abrir acordeones al imprimir para no ocultar contenido */
+  details.panel[open] .panel__body,
+  details.panel .panel__body { display: block !important; }
+  details.panel > summary::after { display: none; }
+}
+
+/* =====================================================================
+   REDISEÑO EDITORIAL: LIBRO ABIERTO + VEGETACIÓN COMO LAS REFERENCIAS
+   Este bloque sobrescribe únicamente la presentación visual anterior.
+   ===================================================================== */
+:root {
+  --flip-dur: 720ms;
+  --paper-edge: #e8dfc9;
+  --leaf-dark: #174b32;
+  --leaf-mid: #397b45;
+  --leaf-light: #80ae62;
+}
+
+body {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(205,235,221,.2), transparent 48%),
+    linear-gradient(145deg, #aab65a 0%, #537e45 34%, #173e40 76%, #102b2d 100%);
+}
+.app { padding: clamp(8px, 2vw, 24px); gap: 18px; }
+.book-wrap {
+  width: min(1180px, 96vw);
+  height: min(82dvh, 850px);
+  min-height: 520px;
+  perspective: 2600px;
+  filter: drop-shadow(0 24px 28px rgba(0,0,0,.28));
+}
+
+/* La hoja izquierda es parte fija del libro abierto; no queda vacía. */
+.book-wrap::before {
+  content: "UN MOMENTO CON DIOS";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12% 11%;
+  text-align: center;
+  color: var(--bosque);
+  font: 700 clamp(1.3rem, 2.3vw, 2rem)/1.3 var(--fuente-titulo);
+  letter-spacing: .05em;
+  border: 1px solid #d7cba7;
+  border-radius: 14px 3px 3px 14px;
+  background:
+    linear-gradient(rgba(255,254,247,.88), rgba(255,254,247,.88)),
+    url('assets/corner-leaves.svg') left top / 180px auto no-repeat,
+    url('assets/corner-leaves.svg') right bottom / 180px auto no-repeat,
+    var(--blanco);
+  box-shadow: inset -12px 0 20px rgba(23,62,64,.12), inset 0 0 0 10px rgba(205,235,221,.55);
+  z-index: 0;
+}
+.book-wrap::after {
+  content: "✦  Una pausa para el alma  ✦";
+  position: absolute;
+  inset: 0 auto 0 calc(50% - 1px);
+  width: 2px;
+  overflow: visible;
+  white-space: nowrap;
+  color: var(--dorado);
+  font: 500 10px var(--fuente-ui);
+  text-align: center;
+  writing-mode: vertical-rl;
+  letter-spacing: .18em;
+  background: linear-gradient(90deg, rgba(25,48,35,.28), rgba(255,255,255,.65), rgba(25,48,35,.2));
+  z-index: 8;
+  pointer-events: none;
+}
+.viewport {
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 50%;
+  overflow: visible;
+  transform-style: preserve-3d;
+}
+.page { width: 100%; }
+.page__sheet { border-radius: 3px 14px 14px 3px; }
+.page__face {
+  border-radius: 3px 14px 14px 3px;
+  border: 1px solid rgba(100,123,72,.32);
+  background-color: var(--blanco);
+  background-image:
+    url('assets/paper-texture.svg'),
+    radial-gradient(ellipse at 100% 0%, rgba(205,235,221,.72), transparent 38%),
+    radial-gradient(ellipse at 0% 100%, rgba(241,231,213,.72), transparent 35%);
+  box-shadow: inset 0 0 0 8px rgba(205,235,221,.28), inset 0 0 0 10px rgba(216,189,113,.22), 5px 8px 22px rgba(23,62,64,.18);
+}
+.page__front::after {
+  left: 0; width: 18px;
+  background: linear-gradient(90deg, rgba(23,62,64,.2), rgba(23,62,64,.03), transparent);
+}
+.page__content {
+  padding: clamp(26px, 3.2vw, 42px) clamp(22px, 3vw, 36px);
+  gap: 18px;
+  scrollbar-gutter: stable;
+  background:
+    linear-gradient(90deg, transparent 0, transparent 96%, rgba(159,190,165,.12) 100%);
+}
+/* Marco editorial y vegetación más visibles, inspirados en las referencias */
+.inner-frame {
+  inset: 15px;
+  border: 1.5px solid rgba(77,139,87,.72);
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 4px rgba(255,254,247,.52);
+}
+.inner-frame::before { inset: 5px; border-color: rgba(216,189,113,.8); border-radius: 4px; }
+.decor { opacity: 1; filter: saturate(1.14) contrast(1.03); }
+.decor--tl, .decor--br { width: clamp(92px, 24%, 168px); }
+.decor--tr, .decor--bl { width: clamp(82px, 21%, 145px); }
+.page__content > .decor { z-index: 0; }
+.page__content > .kicker,
+.page__content > .page-title,
+.page__content > .page-sub,
+.page__content > .body-text,
+.page__content > .chapter-num,
+.page__content > .chapter-illu,
+.page__content > .verse-card,
+.page__content > .question-list,
+.page__content > .accordions,
+.page__content > .pull-quote,
+.page__content > .prayer-box,
+.page__content > .sprig,
+.page__content > .field,
+.page__content > .write-lines,
+.page__content > .tool-row,
+.page__content > .soft-note { z-index: 2; }
+
+/* Tarjetas más llenas y vivas: esquinas vegetales y doble marco */
+.verse-card, .panel, .question-list li, .prayer-box, .soft-note {
+  box-shadow: 0 7px 18px rgba(36,86,61,.10), inset 0 0 0 3px rgba(255,254,247,.52);
+}
+.verse-card {
+  border-radius: 9px 22px 9px 22px;
+  border: 1px solid #8fb895;
+  background:
+    url('assets/paper-texture.svg'),
+    linear-gradient(145deg, #d6f0df 0%, #fffef7 62%, #f1e7d5 100%);
+}
+.verse-card .leaf-corner { width: 88px; opacity: .96; }
+.panel {
+  position: relative;
+  border-radius: 9px 18px 9px 18px;
+  background: linear-gradient(135deg, rgba(205,235,221,.92), rgba(255,254,247,.98) 70%);
+}
+.panel::after {
+  content: "";
+  position: absolute;
+  right: -2px; bottom: -3px;
+  width: 58px; height: 58px;
+  pointer-events: none;
+  opacity: .36;
+  background: url('assets/corner-leaves.svg') center / contain no-repeat;
+  transform: rotate(180deg);
+}
+.panel > summary { padding-right: 54px; }
+.question-list li {
+  border-radius: 7px 15px 7px 15px;
+  border-color: rgba(159,190,165,.72);
+  background: linear-gradient(105deg, #fffef7, #f2f8ed);
+}
+.pull-quote {
+  border-radius: 8px 22px 8px 22px;
+  background: linear-gradient(110deg, rgba(205,235,221,.95), rgba(255,254,247,.98));
+  box-shadow: inset 0 0 0 1px rgba(77,139,87,.2);
+}
+.prayer-box {
+  border: 1px solid rgba(216,189,113,.7);
+  background:
+    url('assets/corner-leaves.svg') right bottom / 94px auto no-repeat,
+    linear-gradient(145deg, #24563d, #173e40);
+  border-radius: 8px 22px 8px 22px;
+  padding-right: 60px;
+}
+
+/* La cubierta se muestra completa; al abrir, el libro se convierte en doble página. */
+.book-wrap:has(.cover.is-active) { width: min(760px, 94vw); }
+.book-wrap:has(.cover.is-active)::before,
+.book-wrap:has(.cover.is-active)::after { display: none; }
+.book-wrap:has(.cover.is-active) .viewport { width: 100%; left: 0; right: auto; }
+.cover .page__sheet, .cover .page__face { border-radius: 14px; }
+.cover .page__face {
+  background:
+    url('assets/corner-leaves.svg') left top / 230px auto no-repeat,
+    url('assets/corner-leaves.svg') right bottom / 230px auto no-repeat,
+    radial-gradient(ellipse at center, rgba(114,207,195,.18), transparent 60%),
+    linear-gradient(155deg, #123b35, #24563d 64%, #102b2d);
+  box-shadow: inset 0 0 0 10px rgba(216,189,113,.08), inset 0 0 0 14px rgba(255,254,247,.08), var(--sombra-libro);
+}
+.cover__frame { border-radius: 5px; inset: 22px; border-width: 2px; box-shadow: inset 0 0 0 5px rgba(216,189,113,.12); }
+.cover__plate {
+  border-radius: 5px 22px 5px 22px;
+  background:
+    url('assets/paper-texture.svg'),
+    linear-gradient(145deg, #fffef7, #f1e7d5);
+  border: 1px solid var(--dorado);
+  box-shadow: 0 18px 40px rgba(0,0,0,.3), inset 0 0 0 5px rgba(205,235,221,.45);
+}
+.cover__leaf { width: clamp(160px, 38%, 280px); }
+
+/* Evitar paneles decorativos que provoquen huecos en móvil */
+@media (max-width: 760px) {
+  .book-wrap { width: 96vw; height: min(78dvh, 820px); min-height: 500px; }
+  .book-wrap::before, .book-wrap::after { display: none; }
+  .viewport, .book-wrap:has(.cover.is-active) .viewport { width: 100%; left: 0; right: auto; }
+  .page__sheet, .page__face { border-radius: 10px; }
+  .page__content { padding: 28px 24px 34px; gap: 15px; }
+  .decor--tr, .decor--bl { display: block; opacity: .72; }
+  .decor--tl, .decor--br { width: 92px; }
+  .decor--tr, .decor--bl { width: 76px; }
+  .controls { border-radius: 20px; }
+}
+@media (max-width: 420px) {
+  .book-wrap { height: 78dvh; min-height: 470px; }
+  .page__content { padding: 25px 20px 30px; }
+  .inner-frame { inset: 9px; }
+  .cover__inner { inset: 48px 24px; }
+  .cover__plate { padding: 22px 18px; }
+}
+@media (min-width: 761px) {
+  .page__content { padding-left: clamp(25px, 3.3vw, 42px); padding-right: clamp(25px, 3.3vw, 42px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panel__body, .cover__open, .leaf-float { animation: none !important; transition: none !important; }
+}
+@media print {
+  .book-wrap { width: 100% !important; height: auto !important; min-height: 0 !important; filter: none !important; }
+  .book-wrap::before, .book-wrap::after { display: none !important; }
+  .viewport, .book-wrap:has(.cover.is-active) .viewport { position: static !important; width: 100% !important; }
+  .page__face { background-color: white !important; }
+}
+
+/* AJUSTE VISUAL: relleno botánico para evitar páginas interiores vacías */
+.book-wrap:not(:has(.cover.is-active)) {
+  width: min(1180px, 96vw);
+  height: min(82dvh, 850px);
+  min-height: 520px;
+}
+.book-wrap:not(:has(.cover.is-active))::before {
+  content: "UN MOMENTO CON DIOS";
+  background:
+    url("assets/corner-leaves.svg") left top / 190px auto no-repeat,
+    url("assets/corner-leaves.svg") right bottom / 190px auto no-repeat,
+    url("assets/corner-leaves.svg") left bottom / 130px auto no-repeat,
+    radial-gradient(ellipse at 0% 0%, rgba(205,235,221,.92), transparent 38%),
+    radial-gradient(ellipse at 100% 100%, rgba(241,231,213,.88), transparent 36%),
+    linear-gradient(135deg, #fffef7 0%, #f7f4e7 52%, #eaf4e8 100%);
+  border: 1px solid rgba(77,139,87,.6);
+  box-shadow: inset 0 0 0 8px rgba(205,235,221,.65),
+              inset 0 0 0 11px rgba(216,189,113,.45),
+              inset -16px 0 24px rgba(23,62,64,.12);
+}
+.page__face { isolation: isolate; }
+.page__content {
+  z-index: 2;
+  color: var(--texto);
+  background:
+    url("assets/corner-leaves.svg") left top / 145px auto no-repeat,
+    url("assets/corner-leaves.svg") right bottom / 145px auto no-repeat,
+    radial-gradient(ellipse at 0% 0%, rgba(205,235,221,.34), transparent 36%),
+    radial-gradient(ellipse at 100% 100%, rgba(241,231,213,.38), transparent 36%),
+    linear-gradient(135deg, rgba(255,254,247,.97), rgba(255,254,247,.94));
+  padding: clamp(34px, 3.2vw, 48px) clamp(28px, 3vw, 42px);
+}
+.page__content > * { position: relative; z-index: 3; flex-shrink: 0; }
+.page__content > .decor,
+.page__content > .inner-frame { position: absolute; z-index: 1; }
+.page__content > .decor--tl,
+.page__content > .decor--br { width: clamp(120px, 27%, 205px); opacity: .98; filter: saturate(1.25) contrast(1.08); }
+.page__content > .decor--tr,
+.page__content > .decor--bl { width: clamp(105px, 23%, 175px); opacity: .98; filter: saturate(1.25) contrast(1.08); }
+.inner-frame { inset: 16px; border: 1.5px solid rgba(77,139,87,.72); box-shadow: inset 0 0 0 4px rgba(255,254,247,.45); }
+.inner-frame::before { content: ""; position: absolute; inset: 5px; border: 1px solid rgba(216,189,113,.8); border-radius: 4px; }
+.verse-card, .panel, .question-list li, .pull-quote, .prayer-box, .soft-note { position: relative; overflow: hidden; }
+.verse-card::after, .pull-quote::after, .soft-note::after {
+  content: ""; position: absolute; right: -8px; bottom: -12px; width: 76px; height: 76px;
+  background: url("assets/corner-leaves.svg") center / contain no-repeat; opacity: .22; transform: rotate(180deg); pointer-events: none;
+}
+.verse-card > *, .pull-quote > *, .soft-note > * { position: relative; z-index: 1; }
+.book-wrap:not(:has(.cover.is-active)) .viewport { right: 0; width: 50%; }
+@media (max-width: 700px) {
+  .book-wrap:not(:has(.cover.is-active)) { width: 96vw; min-height: 0; height: min(78dvh, 760px); }
+  .book-wrap:not(:has(.cover.is-active))::before,
+  .book-wrap:not(:has(.cover.is-active))::after { display: none; }
+  .book-wrap:not(:has(.cover.is-active)) .viewport { width: 100%; left: 0; right: auto; }
+  .book-wrap:not(:has(.cover.is-active)) .page__content { padding: 30px 24px 36px; }
+}
+@media print { .page__content { background-color: #fffef7 !important; } }
