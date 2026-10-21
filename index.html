@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Un momento con Dios: libro interactivo de reflexion cristiana para estudiantes." />
+  <meta name="theme-color" content="#173E40" />
+  <title>Un momento con Dios · Cuando mi corazón necesita hablar</title>
+
+  <!-- Tipografias (mejora progresiva; hay fuentes de respaldo del sistema) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&family=Lora:ital,wght@0,400;0,500;1,400&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#libro">Saltar al contenido del libro</a>
+
+  <main class="app">
+    <!-- Controles de navegacion (ocultos en la portada) -->
+    <nav class="controls" id="controls" aria-label="Navegación del libro" hidden>
+      <button class="ctrl-btn" id="btn-cover" type="button">⌂ <span class="lbl-long">Portada</span></button>
+      <button class="ctrl-btn" id="btn-prev" type="button">← <span class="lbl-long">Anterior</span></button>
+      <span class="page-indicator" id="indicator" role="status" aria-live="polite">—</span>
+      <button class="ctrl-btn" id="btn-next" type="button"><span class="lbl-long">Siguiente</span> →</button>
+      <button class="ctrl-btn ctrl-btn--primary" id="btn-index" type="button" aria-haspopup="dialog">☰ <span class="lbl-long">Índice</span></button>
+      <button class="ctrl-btn" id="btn-sound" type="button" aria-pressed="false">🔇 <span class="lbl-long">Sonido</span></button>
+      <button class="ctrl-btn" id="btn-motion" type="button" aria-pressed="false">∿ <span class="lbl-long">Movimiento</span></button>
+      <button class="ctrl-btn" id="btn-print" type="button">⎙ <span class="lbl-long">Imprimir</span></button>
+    </nav>
+
+    <!-- Libro -->
+    <div class="book-wrap">
+      <div class="viewport" id="libro" tabindex="-1">
+        <!-- PORTADA (estatica) -->
+        <section class="page cover is-active" id="page-cover" aria-label="Portada">
+          <div class="page__sheet">
+            <div class="page__face page__front">
+              <img class="cover__leaf t" src="assets/corner-leaves.svg" alt="" aria-hidden="true" />
+              <img class="cover__leaf b" src="assets/corner-leaves.svg" alt="" aria-hidden="true" />
+              <div class="cover__frame"></div>
+              <div class="cover__inner">
+                <div class="cover__plate">
+                  <span class="cover__title">Un momento con Dios</span>
+                  <h1 class="cover__main">Cuando mi corazón necesita hablar</h1>
+                  <p class="cover__sub">Un espacio para detenerme, respirar, escuchar la Palabra y encontrar esperanza.</p>
+                  <svg class="cover__verse-illu" viewBox="0 0 120 90" aria-hidden="true">
+                    <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#CDEBDD"/><stop offset="1" stop-color="#72CFC3"/></linearGradient></defs>
+                    <path d="M60 26 C 40 14, 16 16, 10 20 L10 74 C 20 69, 44 68, 60 80 C 76 68, 100 69, 110 74 L110 20 C 104 16, 80 14, 60 26 Z" fill="url(#lg)" stroke="#4D8B57" stroke-width="2"/>
+                    <path d="M60 26 V80" stroke="#4D8B57" stroke-width="2"/>
+                    <path d="M60 16 C 58 6, 66 2, 70 6 C 66 12, 62 14, 60 16 Z" fill="#4D8B57"/>
+                    <circle cx="60" cy="8" r="3" fill="#D8BD71"/>
+                  </svg>
+                </div>
+                <p class="cover__epigraph">“No necesitas tener todas las respuestas para acercarte a Dios”.</p>
+                <button class="cover__open" id="btn-open" type="button">Abrir mi libro <span class="ar" aria-hidden="true">→</span></button>
+              </div>
+            </div>
+            <div class="page__face page__back" aria-hidden="true"></div>
+          </div>
+        </section>
+        <!-- Las demas paginas se generan desde script.js dentro de #libro -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Panel de indice -->
+  <div class="scrim" id="scrim"></div>
+  <aside class="index-panel" id="index-panel" role="dialog" aria-modal="false" aria-labelledby="index-title" aria-hidden="true">
+    <div class="index-panel__head">
+      <h2 id="index-title">Índice del libro</h2>
+      <button class="index-close" id="index-close" type="button" aria-label="Cerrar índice">✕</button>
+    </div>
+    <ul class="index-list" id="index-list"><!-- generado por JS --></ul>
+  </aside>
+
+  <script src="script.js"></script>
+</body>
+</html>
